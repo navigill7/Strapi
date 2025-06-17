@@ -1,0 +1,158 @@
+name: 🔥 Terraform Destroy Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type "DESTROY" to confirm infrastructure destruction'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to destroy (for verification)'
+        required: true
+        type: choice
+        options:
+          - 'production'
+          - 'staging'
+          - 'development'
+      reason:
+        description: 'Reason for destroying infrastructure'
+        required: true
+        type: string
+
+env:
+  IMAGE_NAME: gillnavi/strapi
+  IMAGE_TAG: ${{github.sha}}
+
+jobs:
+  # Security check job
+  validate-destroy:
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.validation.outputs.proceed }}
+    steps:
+      - name: Validate Destruction Request
+        id: validation
+        run: |
+          if [ "${{ github.event.inputs.confirmation }}" != "DESTROY" ]; then
+            echo "❌ Confirmation failed. You must type exactly 'DESTROY' to proceed."
+            echo "proceed=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          if [ -z "${{ github.event.inputs.reason }}" ]; then
+            echo "❌ Reason is required for infrastructure destruction."
+            echo "proceed=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "✅ Validation passed"
+          echo "proceed=true" >> $GITHUB_OUTPUT
+
+      - name: Log Destruction Request
+        run: |
+          echo "🚨 INFRASTRUCTURE DESTRUCTION REQUESTED"
+          echo "👤 Requested by: ${{ github.actor }}"
+          echo "🕐 Timestamp: $(date)"
+          echo "🌍 Environment: ${{ github.event.inputs.environment }}"
+          echo "📝 Reason: ${{ github.event.inputs.reason }}"
+          echo "📋 Confirmation: ${{ github.event.inputs.confirmation }}"
+
+  # Manual approval step (requires admin approval)
+  approval:
+    runs-on: ubuntu-latest
+    needs: validate-destroy
+    if: needs.validate-destroy.outputs.proceed == 'true'
+    environment: 
+      name: destruction-approval
+      # This environment should be configured in GitHub with required reviewers
+    steps:
+      - name: Wait for Admin Approval
+        run: |
+          echo "⏳ Waiting for admin approval to destroy infrastructure..."
+          echo "🔒 This step requires manual approval from authorized personnel"
+
+  # Terraform destroy job
+  terraform-destroy:
+    runs-on: ubuntu-latest
+    needs: [validate-destroy, approval]
+    if: needs.validate-destroy.outputs.proceed == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.4
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Initialize
+        working-directory: Deployment_infra
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: Deployment_infra
+        run: terraform validate
+
+      - name: Show Current Infrastructure
+        working-directory: Deployment_infra
+        run: |
+          echo "📋 Current infrastructure state:"
+          terraform show
+
+      - name: Plan Destruction
+        working-directory: Deployment_infra
+        run: |
+          echo "🗂️ Planning infrastructure destruction..."
+          terraform plan -destroy
+
+      - name: Final Confirmation
+        run: |
+          echo "⚠️  FINAL WARNING: About to destroy infrastructure!"
+          echo "👤 Initiated by: ${{ github.actor }}"
+          echo "🌍 Environment: ${{ github.event.inputs.environment }}"
+          echo "📝 Reason: ${{ github.event.inputs.reason }}"
+          echo "🕐 Timestamp: $(date)"
+          sleep 10
+
+      - name: Destroy Infrastructure
+        working-directory: Deployment_infra
+        run: |
+          echo "🔥 Destroying infrastructure..."
+          terraform destroy -auto-approve
+
+      - name: Verify Destruction
+        working-directory: Deployment_infra
+        run: |
+          echo "✅ Verifying infrastructure destruction..."
+          terraform show
+
+  # Notification job
+  notify-completion:
+    runs-on: ubuntu-latest
+    needs: [terraform-destroy]
+    if: always()
+    steps:
+      - name: Notify Destruction Result
+        run: |
+          if [ "${{ needs.terraform-destroy.result }}" == "success" ]; then
+            echo "✅ Infrastructure successfully destroyed"
+            echo "👤 Destroyed by: ${{ github.actor }}"
+            echo "🕐 Completed at: $(date)"
+            echo "📝 Reason: ${{ github.event.inputs.reason }}"
+          else
+            echo "❌ Infrastructure destruction failed"
+            echo "👤 Attempted by: ${{ github.actor }}"
+            echo "🕐 Failed at: $(date)"
+          fi
+
+      # Optional: Send notification to Slack/Teams/Email
+      # - name: Send Slack Notification
+      #   if: always()
+      #   uses: 8398a7/action-slack@v3
+      #   with:
+      #     status: ${{ needs.terraform-destroy.result }}
+      #     text: "Infrastructure destruction ${{ needs.terraform-destroy.result }} by ${{ github.actor }}"
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
