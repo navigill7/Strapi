@@ -14,7 +14,7 @@ env:
     AWS_REGION: ${{ secrets.AWS_REGION }}
     IMAGE_NAME: gillnavi/strapi
     IMAGE_TAG: ${{github.sha}}
-    TF_CLOUD_TOKEN_app_terraform_io: ${{ secrets.TF_CLOUD_TOKEN_app_terraform_io }}
+    
 
 jobs:
     build-and-push:
@@ -41,6 +41,8 @@ jobs:
     terraform-deploy:
         runs-on: ubuntu-latest
         needs: build-and-push
+        env:
+          TF_CLOUD_TOKEN_app_terraform_io: ${{ secrets.TF_CLOUD_TOKEN_app_terraform_io }}
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
