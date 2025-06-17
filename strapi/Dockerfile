@@ -1,6 +1,4 @@
-# ===================
 # 1. Build Stage
-# ===================
 FROM node:20 AS builder
 
 WORKDIR /app
