@@ -37,8 +37,6 @@ variable "availability_zones" {
 variable "private_subnets" {
   type = list(string)
   description = "List of CIDR blocks for private subnets"
-  default = []
-
    
 }
 
