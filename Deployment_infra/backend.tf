@@ -1,9 +1,10 @@
-terraform {
-  backend "remote" {
-    organization = "navigill"     # Replace with your Terraform Cloud org name
+terraform { 
+  cloud { 
+    
+    organization = "navigill" 
 
-    workspaces {
-      name = "strapi_project"              # Must match the workspace you created
-    }
-  }
+    workspaces { 
+      name = "Strapi_project" 
+    } 
+  } 
 }
