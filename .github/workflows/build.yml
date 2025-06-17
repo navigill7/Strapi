@@ -32,7 +32,7 @@ jobs:
                 password: ${{ env.DOCKERHUB_PASSWORD }}
             
             - name: Build and push Docker image
-              working-directory: my-medusa-store
+              working-directory: strapi
               run: |
                   docker build -t $IMAGE_NAME:$IMAGE_TAG .
                   docker push $IMAGE_NAME:$IMAGE_TAG
