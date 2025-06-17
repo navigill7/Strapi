@@ -13,7 +13,6 @@ services:
     networks:
       - strapi-net
 
-
   strapi:
     build:
       context: .
