@@ -26,8 +26,6 @@ WORKDIR /app
 # Copy only required files from build stage
 COPY --from=builder /app /app
 
-
-
 # Install only production dependencies
 COPY package*.json ./
 RUN npm install --production && npm install pg --save
