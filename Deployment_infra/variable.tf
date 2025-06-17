@@ -36,10 +36,7 @@ variable "private_subnets" {
   description = "List of CIDR blocks for private subnets"
   default = []
 
-    validation {
-        condition = length(var.private_subnets) == length(var.availability_zones)
-        error_message = "The number of private subnets must match the number of availability zones."
-    }  
+
 }
 
 variable "ami_id" {
