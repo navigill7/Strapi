@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: strapi-postgres
+    environment:
+      POSTGRES_DB: strapi
+      POSTGRES_USER: strapi
+      POSTGRES_PASSWORD: strapi
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - strapi-net
+
+  strapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: gillnavi/strapi-mini
+    container_name: strapi-app
+    env_file: .env
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "1337:1337"
+    depends_on:
+      - postgres
+    networks:
+      - strapi-net
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx-proxy
+    ports:
+      - "80:80"  
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - strapi
+    networks:
+      - strapi-net
+
+networks:
+  strapi-net:
+
+volumes:
+  postgres-data:
