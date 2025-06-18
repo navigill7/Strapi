@@ -28,7 +28,7 @@ resource "aws_iam_policy" "iam-policy" {
       {
         Effect = "Allow"
         Action = [
-          "ecs:*",  # Broad ECS permissions
+          "ecs:*", 
           "logs:*" ,
           "ec2:*"
         ]
