@@ -18,6 +18,7 @@ resource "aws_lb_target_group" "strapi_target_group" {
   port        = 1337
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
+  deregistration_delay = "300"
   target_type = "ip"  # ✅ Added this line - required for ECS awsvpc network mode
 
   health_check {
