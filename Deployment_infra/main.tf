@@ -47,9 +47,23 @@ module "iam" {
   source = "./IAM"
 }
 
+module "ecs" {
+  source = "./ECS"
+  vpc_id = module.networking.aws_vpc_id
+  execution_role_arn = module.iam.execution_role_arn 
+  target_group_arn = module.alb.target_group_arn
+  subnet_ids = module.networking.aws_private_subnet_ids
+  security_group_id = module.security.aws_alb_security_group_id
+}
 
-
-
+module "ecs" {
+  source = "./ECS"
+  vpc_id = module.networking.aws_vpc_id
+  execution_role_arn = module.iam.execution_role_arn 
+  target_group_arn = module.alb.target_group_arn
+  subnet_ids = module.networking.aws_private_subnet_ids
+  security_group_id = module.security.aws_alb_security_group_id
+}
 
 
 
