@@ -47,7 +47,7 @@ module "ecs" {
 }
 
 module "alb" {
-  source = "./Load_Balancers"
+  source = "./ALB"
   vpc_id = module.networking.aws_vpc_id
   public_subnet_ids = module.networking.aws_public_subnet_ids
   alb_security_group_id = module.security.aws_alb_security_group_id
