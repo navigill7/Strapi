@@ -20,6 +20,8 @@ FROM node:20-slim AS final
 
 WORKDIR /app
 
+
+
 # Copy only required files from build stage
 COPY --from=builder /app /app
 
