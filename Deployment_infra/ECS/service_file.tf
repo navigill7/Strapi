@@ -1,4 +1,4 @@
-resource "aws_ecs_service" "medusa-cluster-service" {
+resource "aws_ecs_service" "strapi-cluster-service" {
   name            = "cluster-service"
   cluster         = aws_ecs_cluster.strapi-cluster.id
   task_definition = aws_ecs_task_definition.TD.arn
