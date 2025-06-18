@@ -12,6 +12,7 @@ RUN npm install && npm install pg --save
 # Copy the rest of the app
 COPY . .
 
+
 # Build the Strapi app (if needed, skip if not using `build`)
 # RUN npm run build
 
