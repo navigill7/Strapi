@@ -38,13 +38,13 @@ resource "aws_lb_target_group" "strapi_target_group" {
 }
 
 
-resource "aws_lb_target_group_attachment" "strapi_target_group_attachment" {
-  count              = length(var.strapi_instance_ids)
-  target_group_arn   = aws_lb_target_group.strapi_target_group.arn
-  target_id          = var.strapi_instance_ids[count.index]
-  port               = 1337
+# resource "aws_lb_target_group_attachment" "strapi_target_group_attachment" {
+#   count              = length(var.strapi_instance_ids)
+#   target_group_arn   = aws_lb_target_group.strapi_target_group.arn
+#   target_id          = var.strapi_instance_ids[count.index]
+#   port               = 1337
   
-}
+# }
 
 resource "aws_lb_listener" "strapi_http_listener" {
   load_balancer_arn = aws_lb.strapi_alb.arn
