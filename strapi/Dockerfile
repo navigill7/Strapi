@@ -14,9 +14,8 @@ COPY . .
 
 # Build the Strapi app (if needed, skip if not using `build`)
 # RUN npm run build
-# ===================
+
 # 2. Production Stage
-# ===================
 FROM node:20-slim AS final
 
 WORKDIR /app
