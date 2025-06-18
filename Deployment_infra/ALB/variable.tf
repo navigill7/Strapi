@@ -17,9 +17,5 @@ variable "vpc_id" {
 }
 
 
-variable "strapi_instance_ids" {
-  description = "List of Strapi instance IDs to attach to the target group."
-  type        = list(string)
-  
-}
+
 
