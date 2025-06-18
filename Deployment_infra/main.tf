@@ -32,38 +32,30 @@ module "security" {
 #   private_key_path = var.private_key_path
 # }
 
-module "alb" {
-  source = "./ALB"
-  vpc_id = module.networking.aws_vpc_id
-  public_subnet_ids = module.networking.aws_public_subnet_ids
-  alb_security_group_id = module.security.aws_alb_security_group_id
-  strapi_instance_ids = module.compute.aws_strapi_instance_ids
-
-
-}
-
 
 module "iam" {
   source = "./IAM"
+  
 }
-
 module "ecs" {
   source = "./ECS"
   vpc_id = module.networking.aws_vpc_id
-  execution_role_arn = module.iam.execution_role_arn 
+  execution_role_arn = module.iam.iam-role
   target_group_arn = module.alb.target_group_arn
   subnet_ids = module.networking.aws_private_subnet_ids
-  security_group_id = module.security.aws_alb_security_group_id
+  security_group_id = toset([module.security.aws_alb_security_group_id])
 }
 
-module "ecs" {
-  source = "./ECS"
+module "alb" {
+  source = "./Load_Balancers"
   vpc_id = module.networking.aws_vpc_id
-  execution_role_arn = module.iam.execution_role_arn 
-  target_group_arn = module.alb.target_group_arn
-  subnet_ids = module.networking.aws_private_subnet_ids
-  security_group_id = module.security.aws_alb_security_group_id
+  public_subnet_ids = module.networking.aws_public_subnet_ids
+  alb_security_group_id = module.security.aws_alb_security_group_id
+
+
 }
+
+
 
 
 
