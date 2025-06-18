@@ -43,6 +43,13 @@ module "alb" {
 }
 
 
+module "iam" {
+  source = "./IAM"
+}
+
+
+
+
 
 
 
