@@ -37,6 +37,25 @@ jobs:
               run: |
                   docker build -t $IMAGE_NAME:$IMAGE_TAG .
                   docker push $IMAGE_NAME:$IMAGE_TAG
+
+            - name: update ecs task definition with new image tag 
+              run: |
+                sed -i 's|image = ".*"|image = "'$IMAGE_NAME':'$IMAGE_TAG'"|' Deployment_infra/ECS/task_definition.tf
+
+            - name: setup the ssh access
+              run: |
+                   mkdir -p ~/.ssh
+                   echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+                   chmod 600 ~/.ssh/id_ed25519
+                   ssh-keyscan github.com >> ~/.ssh/known_hosts
+            - name: Commit and push changes via SSH
+              run: |
+                    git config --global user.name "github-actions"
+                    git config --global user.email "github-actions@github.com"
+                    git remote set-url origin git@github.com:${{ github.repository }}.git
+                    git add Deployment_infra/ECS/task_definition.tf
+                    git commit -m "chore: update image tag to $IMAGE_TAG"
+                    git push origin main
     
     terraform-deploy:
         runs-on: ubuntu-latest
