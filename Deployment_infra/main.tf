@@ -19,18 +19,18 @@ module "security" {
   vpc_id = module.networking.aws_vpc_id
 }
 
-module "compute" {
-  source = "./compute"
-  vpc_id = module.networking.aws_vpc_id
-  ami_id = var.ami_id
-   public_subnet_ids = module.networking.aws_public_subnet_ids
-  subnet_id = module.networking.aws_private_subnet_ids
-  strapi_security_group_id = module.security.aws_security_group_strapi_id
-  bastion_security_group_id = module.security.aws_bastion_security_group_id
-  instance_type = var.instance_type
-  key_name = var.key_name
-  private_key_path = var.private_key_path
-}
+# module "compute" {
+#   source = "./compute"
+#   vpc_id = module.networking.aws_vpc_id
+#   ami_id = var.ami_id
+#    public_subnet_ids = module.networking.aws_public_subnet_ids
+#   subnet_id = module.networking.aws_private_subnet_ids
+#   strapi_security_group_id = module.security.aws_security_group_strapi_id
+#   bastion_security_group_id = module.security.aws_bastion_security_group_id
+#   instance_type = var.instance_type
+#   key_name = var.key_name
+#   private_key_path = var.private_key_path
+# }
 
 module "alb" {
   source = "./ALB"
