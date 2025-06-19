@@ -64,3 +64,11 @@ variable "private_key_path" {
   type        = string
   
 }
+
+
+variable "notification_email" {
+  description = "Email address to receive notifications from SNS"
+  type        = string
+
+  
+}

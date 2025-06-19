@@ -55,7 +55,17 @@ module "alb" {
 
 }
 
+module "sns" {
+  source = "./SNS"
+  notification_email = var.notification_email
+}
 
+
+module "cloudwatch" {
+  source = "./cloudwatch"
+  ecs_alarm_topic_arn = module.sns.sns_topic_arn
+  
+}
 
 
 

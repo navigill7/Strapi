@@ -23,3 +23,5 @@ key_name = "strapi-key"
 
 
 private_key_path = "../../../../Downloads/strapi-key.pem"
+
+notification_email = "devcode752@gmail.com"
