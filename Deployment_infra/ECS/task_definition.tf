@@ -1,5 +1,5 @@
 resource "aws_ecs_task_definition" "TD" {
-  family                   = "medusa-service"
+  family                   = "strapi-service"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = "4096"

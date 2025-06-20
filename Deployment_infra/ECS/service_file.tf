@@ -7,7 +7,7 @@ resource "aws_ecs_service" "strapi-cluster-service" {
   network_configuration {
     subnets          = var.subnet_ids
     security_groups  = var.security_group_id
-    assign_public_ip = true
+    assign_public_ip = false
   }
   load_balancer {
     target_group_arn = var.target_group_arn
