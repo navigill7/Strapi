@@ -58,3 +58,46 @@ resource "aws_iam_role" "ecs_cleanup_lambda_role" {
     }]
   })
 }
+
+
+resource "aws_iam_policy" "ecs_cleanup_policy" {
+  name        = "ecs-cleanup-permissions"
+  description = "Allows ECS and EC2 ENI cleanup"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = [
+          "ecs:ListClusters",
+          "ecs:ListServices",
+          "ecs:ListTasks",
+          "ecs:DescribeServices",
+          "ecs:DescribeTasks",
+          "ecs:StopTask",
+          "ecs:DeleteService"
+        ],
+        Effect   = "Allow",
+        Resource = "*"
+      },
+      {
+        Action = [
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:DeleteNetworkInterface"
+        ],
+        Effect   = "Allow",
+        Resource = "*"
+      },
+      {
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Effect   = "Allow",
+        Resource = "*"
+      }
+    ]
+  })
+}
+
