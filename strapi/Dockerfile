@@ -3,7 +3,6 @@ FROM node:20 AS builder
 
 WORKDIR /app
 
-# Copy only package files first to leverage Docker cache
 COPY package*.json ./
 
 # Install dependencies
