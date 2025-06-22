@@ -100,3 +100,16 @@ resource "aws_security_group" "strapi_security_group" {
 }
 
 
+
+resource "aws_security_group" "lambda_sg" {
+  name        = "lambda-cleanup-sg"
+  description = "SG for ECS cleanup Lambda"
+  vpc_id      = var.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
