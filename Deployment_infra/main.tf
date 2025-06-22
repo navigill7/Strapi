@@ -64,6 +64,8 @@ module "sns" {
 module "cloudwatch" {
   source = "./cloudwatch"
   ecs_alarm_topic_arn = module.sns.sns_topic_arn
+  ecs_cleanup_lambda_arn = module.lambda.aws_lambda_arn
+  lambda_name = module.lambda.lambda_name
   
 }
 
