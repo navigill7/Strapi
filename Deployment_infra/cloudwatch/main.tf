@@ -43,3 +43,10 @@ resource "aws_cloudwatch_event_rule" "ecs_cleanup_schedule" {
   schedule_expression = "cron(0 2 * * ? *)" # every day at 2 AM UTC
 
 }
+
+
+resource "aws_cloudwatch_event_target" "ecs_cleanup_target" {
+  rule      = aws_cloudwatch_event_rule.ecs_cleanup_schedule.name
+  target_id = "ecsCleanupLambda"
+  arn       = var.ecs_cleanup_lambda_arn
+}
