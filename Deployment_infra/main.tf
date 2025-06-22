@@ -68,6 +68,15 @@ module "cloudwatch" {
 }
 
 
+module "lambda" {
+  source = "./Lambda"
+  private_subnet_ids = module.networking.aws_private_subnet_ids
+  lambda_security_group_id = module.security.lambda_sg
+  lambda_role = module.iam.ecs_cleanup_lambda_role
+}
+
+
+
 
 output "dns" {
   value = module.alb.alb_dns_name
