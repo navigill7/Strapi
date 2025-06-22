@@ -50,3 +50,11 @@ resource "aws_cloudwatch_event_target" "ecs_cleanup_target" {
   target_id = "ecsCleanupLambda"
   arn       = var.ecs_cleanup_lambda_arn
 }
+
+resource "aws_lambda_permission" "allow_cloudwatch" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.ecs_cleanup_schedule.arn
+}
