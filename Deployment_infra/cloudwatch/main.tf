@@ -33,3 +33,13 @@ resource "aws_cloudwatch_metric_alarm" "ecs_memory_high" {
   }
   alarm_actions = [var.ecs_alarm_topic_arn]
 }
+
+
+/// cloudwatch event rule to trigger lambda function for ECS cleanup
+
+resource "aws_cloudwatch_event_rule" "ecs_cleanup_schedule" {
+  name                = "ecs-cleanup-schedule"
+  description         = "Daily ECS cleanup"
+  schedule_expression = "cron(0 2 * * ? *)" # every day at 2 AM UTC
+
+}
