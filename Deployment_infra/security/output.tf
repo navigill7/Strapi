@@ -18,7 +18,10 @@ output "aws_security_group_strapi_id" {
   
 }
 
-
+output "lambda_sg" {
+  value = aws_security_group.lambda_sg.id
+  description = "Security group ID for the Lambda function"
+}
 
 
 
