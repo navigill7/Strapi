@@ -11,3 +11,8 @@ Supports Strapi running on SQLite or PostgreSQL
 Bastion host support for accessing private instances
 
 Ready for CI/CD integration
+
+
+# INFRASTRUCTURE DIAGRAM 
+
+![image](https://github.com/user-attachments/assets/db5df7d0-105b-43fc-ab68-bd2bc1999010)
