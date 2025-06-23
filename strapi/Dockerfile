@@ -23,4 +23,5 @@ RUN npm install --production && npm install pg --save
 
 EXPOSE 1337
 
+
 CMD ["npm", "run", "develop"]
