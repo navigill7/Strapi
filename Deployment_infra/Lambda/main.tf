@@ -7,7 +7,9 @@ resource "aws_lambda_function" "ecs_cleanup" {
   role             = var.lambda_role
   timeout          = 60
   memory_size      = 512
-  source_code_hash = filebase64sha256("${path.module}/ecs_cleanup.zip")
+  s3_bucket = "lambda-script-strapi-cleanup"
+  s3_key    = "ecs_cleanup.zip"
+
 
 
   vpc_config {
