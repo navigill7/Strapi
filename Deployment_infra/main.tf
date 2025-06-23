@@ -86,7 +86,3 @@ output "dns" {
 }
 
 
-output "lambda_zip_path" {
-  value = filebase64sha256("${path.module}/ecs_cleanup.zip")
-}
-
