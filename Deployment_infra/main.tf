@@ -85,3 +85,8 @@ output "dns" {
   description = "The DNS name of the ALB for Strapi."
 }
 
+
+output "lambda_zip_path" {
+  value = filebase64sha256("${path.module}/ecs_cleanup.zip")
+}
+
