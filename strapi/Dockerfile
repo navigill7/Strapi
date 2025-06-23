@@ -11,7 +11,7 @@ RUN npm install && npm install pg --save
 
 COPY . .
 
-# 2. Production 
+#Stage 2
 FROM node:20-slim AS final
 
 WORKDIR /app
