@@ -20,4 +20,6 @@ resource "aws_ecs_service" "strapi-cluster-service" {
     container_name   = "strapi"
     container_port   = 1337
   }
+
+  force_new_deployment = true
 }
