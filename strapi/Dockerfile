@@ -1,13 +1,25 @@
+# Step 1: Build Admin Panel
+FROM node:22-bullseye-slim as builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+RUN npm run build
+
+# Step 2: Production Image
 FROM node:22-bullseye-slim
 
 WORKDIR /app
 
-COPY . .
+COPY package*.json ./
+RUN npm install --omit=dev
 
-RUN npm install  
+COPY --from=builder /app .
 
-EXPOSE 1337 
+ENV NODE_ENV=production
 
-CMD ["npm", "run", "develop"]
-
-
+EXPOSE 1337
+CMD ["node", "dist/index.js"]
