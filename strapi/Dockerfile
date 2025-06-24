@@ -1,26 +1,11 @@
-# 1. Build Stage
-FROM node:20 AS builder
+FROM node:22-bullseye-slim
 
 WORKDIR /app
-
-COPY package*.json ./
-
-# Install dependencies
-RUN npm install && npm install pg --save
-
 
 COPY . .
 
-#Stage 2
-FROM node:20-slim AS final
+RUN npm install  
 
-WORKDIR /app
-
-COPY --from=builder /app /app
-
-COPY package*.json ./
-RUN npm install --production && npm install pg --save
-
-EXPOSE 1337
+EXPOSE 1337 
 
 CMD ["npm", "run", "develop"]
