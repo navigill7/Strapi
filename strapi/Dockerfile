@@ -21,5 +21,6 @@ COPY --from=builder /app .
 
 ENV NODE_ENV=production
 
+
 EXPOSE 1337
 CMD ["node", "dist/index.js"]
