@@ -1,26 +1,28 @@
-# Step 1: Build Admin Panel
-FROM node:22-bullseye-slim as builder
+# 1. Build Stage
+FROM node:20 AS builder
 
 WORKDIR /app
 
+# Copy only package files first to leverage Docker cache
 COPY package*.json ./
-RUN npm install
+
+# Install dependencies
+RUN npm install && npm install pg --save
+
 
 COPY . .
-RUN npm run build
 
-# Step 2: Production Image
-FROM node:22-bullseye-slim
+# 2. Production Stage
+FROM node:20-slim AS final
 
 WORKDIR /app
 
+COPY --from=builder /app /app
+
+
 COPY package*.json ./
-RUN npm install --omit=dev
-
-COPY --from=builder /app .
-
-ENV NODE_ENV=production
-
+RUN npm install --production && npm install pg --save
 
 EXPOSE 1337
-CMD ["node", "dist/index.js"]
+
+CMD ["npm", "run", "develop"]
