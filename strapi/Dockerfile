@@ -1,28 +1,8 @@
-# 1. Build Stage
-FROM node:20 AS builder
-
-WORKDIR /app
-
-# Copy only package files first to leverage Docker cache
-COPY package*.json ./
-
-# Install dependencies
-RUN npm install && npm install pg --save
-
-
+FROM node
+WORKDIR /opt/
 COPY . .
-
-# 2. Production Stage
-FROM node:20-slim AS final
-
-WORKDIR /app
-
-COPY --from=builder /app /app
-
-
-COPY package*.json ./
-RUN npm install --production && npm install pg --save
-
+RUN npm install -g node-gyp && npm config set fetch-retry-maxtimeout 600000 -g && npm install
+ENV PATH=./node_modules/.bin:$PATH
+RUN ["npm", "run", "build"]
 EXPOSE 1337
-
 CMD ["npm", "run", "develop"]
