@@ -13,7 +13,7 @@ env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   IMAGE_TAG: ${{ github.sha }}
   ECR_REPO_NAME: strapi-artifacts
-  S3_BUCKET: strapi-deployment-bucket
+  S3_BUCKET: strapi-codedeploy-bucket752 
   CODEDEPLOY_APP: strapi-codedeploy
   CODEDEPLOY_GROUP: strapi-deploy-group
 
@@ -48,7 +48,7 @@ jobs:
           docker build -t $IMAGE_URI .
           docker push $IMAGE_URI
           echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
-          
+
       - name: Update ECS task definition with new image tag
         run: |
           sed -i 's|image = ".*"|image = "${{ steps.build.outputs.image_uri }}"|' Deployment_infra/ECS/task_definition.tf
