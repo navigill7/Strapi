@@ -97,3 +97,9 @@ output "dns" {
 }
 
 
+output "task_definition_arn" {
+  value = module.ecs.task_definition_arn
+  description = "The ARN of the ECS task definition for Strapi."
+  
+}
+
