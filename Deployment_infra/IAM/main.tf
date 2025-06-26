@@ -43,6 +43,11 @@ resource "aws_iam_role_policy_attachment" "role-attach" {
   policy_arn = aws_iam_policy.iam-policy.arn
 }
 
+resource "aws_iam_role_policy_attachment" "ecs_ecr_pull" {
+  role       = aws_iam_role.iam-role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
 resource "aws_iam_role" "ecs_cleanup_lambda_role" {
   name = "ecs-cleanup-lambda-role"
 
