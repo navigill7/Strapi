@@ -4,6 +4,11 @@ resource "aws_ecs_service" "strapi-cluster-service" {
   task_definition = aws_ecs_task_definition.TD.arn
   desired_count   = 2
 
+  deployment_controller {
+    type = "CODE_DEPLOY"
+  }
+
+  
   capacity_provider_strategy {
     capacity_provider = "FARGATE_SPOT"
     weight            = 1
