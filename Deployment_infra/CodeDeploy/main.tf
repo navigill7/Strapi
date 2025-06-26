@@ -27,28 +27,12 @@ resource "aws_codedeploy_deployment_group" "strapi" {
       }
 
       target_group {
-        name = var.blue_tg_name  # e.g., "strapi-blue-tg"
+        name = var.blue_tg_name
       }
 
       target_group {
-        name = var.green_tg_name # e.g., "strapi-green-tg"
+        name = var.green_tg_name
       }
-    }
-  }
-
-  blue_green_deployment_config {
-    terminate_blue_instances_on_deployment_success {
-      action                         = "TERMINATE"
-      termination_wait_time_in_minutes = 5
-    }
-
-    deployment_ready_option {
-      action_on_timeout   = "CONTINUE_DEPLOYMENT"
-      wait_time_in_minutes = 0
-    }
-
-    green_fleet_provisioning_option {
-      action = "DISCOVER_EXISTING"
     }
   }
 
