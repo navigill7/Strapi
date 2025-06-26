@@ -23,7 +23,7 @@ resource "aws_codedeploy_deployment_group" "strapi" {
   load_balancer_info {
     target_group_pair_info {
       prod_traffic_route {
-        listener_arns = [var.listener_arn] # Must be a list
+        listener_arns = [var.listener_arns] # Must be a list
       }
 
       target_group {
