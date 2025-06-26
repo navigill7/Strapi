@@ -119,14 +119,12 @@ jobs:
             - TargetService:
                 Type: AWS::ECS::Service
                 Properties:
-                  TaskDefinition: ${TASK_ARN}
+                  TaskDefinition: ${{ needs.terraform-deploy.outputs.task_arn }}
                   LoadBalancerInfo:
                     ContainerName: "strapi"
                     ContainerPort: 1337
           EOF
           aws s3 cp appspec/appspec.yaml s3://${S3_BUCKET}/appspec-${{ github.sha }}.yaml
-        env:
-          TASK_ARN: ${{ needs.terraform-deploy.outputs.task_arn }}
 
       - name: Trigger CodeDeploy Deployment
         run: |
