@@ -47,7 +47,3 @@ networks:
 
 volumes:
   postgres-data:
-
-
-
-  
