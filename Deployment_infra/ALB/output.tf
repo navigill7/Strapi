@@ -10,3 +10,23 @@ output "alb_dns_name" {
   
 }
 
+output "blue_tg_name" {
+  value       = aws_lb_target_group.strapi_blue_tg.name
+  description = "Name of the blue target group for Strapi"
+  
+}
+
+output "green_tg_name" {
+  value       = aws_lb_target_group.strapi_green_tg.name
+  description = "Name of the green target group for Strapi"
+  
+}
+
+
+output "listener_arn" {
+  value       = aws_lb_listener.strapi_http_listener.arn
+  description = "ARN of the ALB listener for Strapi"
+  
+}
+
+
