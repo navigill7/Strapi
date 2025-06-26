@@ -32,6 +32,34 @@ resource "aws_lb_target_group" "strapi_blue_tg" {
   }
 }
 
+
+resource "aws_lb_target_group" "strapi_green_tg" {
+  name        = "strapi-green-tg"
+  port        = 1337
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id
+  deregistration_delay = "300"
+  target_type = "ip"  # ✅ Required for ECS awsvpc network mode
+  
+  health_check {
+    path                = "/admin"
+    protocol            = "HTTP"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 5
+    unhealthy_threshold = 2
+  }
+  
+  tags = {
+    Name = "StrapiGreenTargetGroup"
+  }
+
+
+}
+
+
+
+
 resource "aws_lb_listener" "strapi_http_listener" {
   load_balancer_arn = aws_lb.strapi_alb.arn
   port              = "80"
