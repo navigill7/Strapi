@@ -134,5 +134,4 @@ jobs:
             --application-name $CODEDEPLOY_APP \
             --deployment-group-name $CODEDEPLOY_GROUP \
             --s3-location bucket=$S3_BUCKET,bundleType=YAML,key=appspec-${{ github.sha }}.yaml \
-            --file-exists-behavior OVERWRITE \
             --description "Deploying $IMAGE_TAG"
