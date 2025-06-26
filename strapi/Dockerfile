@@ -10,7 +10,7 @@ RUN npm install -g node-gyp \
     && npm config set fetch-retry-maxtimeout 600000 -g \
     && npm install
 
-# Build  admin panel
+# Build the admin panel
 RUN npm run build
 
 # Expose port
