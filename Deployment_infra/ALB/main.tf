@@ -10,8 +10,8 @@ resource "aws_lb" "strapi_alb" {
   }
 }
 
-resource "aws_lb_target_group" "strapi_target_group" {
-  name        = "strapi-target-group"
+resource "aws_lb_target_group" "strapi_blue_tg" {
+  name        = "strapi-blue-tg"
   port        = 1337
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -28,7 +28,7 @@ resource "aws_lb_target_group" "strapi_target_group" {
   }
   
   tags = {
-    Name = "StrapiTargetGroup"
+    Name = "StrapiBlueTargetGroup"
   }
 }
 
@@ -41,7 +41,7 @@ resource "aws_lb_listener" "strapi_http_listener" {
     type = "forward"
     forward {
       target_group {
-        arn = aws_lb_target_group.strapi_target_group.arn
+        arn = aws_lb_target_group.strapi_blue_tg.arn
       }
     }
   }
@@ -50,3 +50,6 @@ resource "aws_lb_listener" "strapi_http_listener" {
     Name = "StrapiHTTPListener"
   }
 }
+
+
+
