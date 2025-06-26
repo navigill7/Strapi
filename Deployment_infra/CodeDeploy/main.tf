@@ -11,8 +11,8 @@ resource "aws_codedeploy_deployment_group" "strapi" {
   deployment_config_name = "CodeDeployDefault.ECSCanary10Percent5Minutes"
 
   ecs_service {
-    cluster_name = var.cluster_name       # e.g., "strapi-bluegreen-cluster"
-    service_name = var.service_name       # e.g., "strapi-service"
+    cluster_name = var.cluster_name
+    service_name = var.service_name
   }
 
   deployment_style {
@@ -23,7 +23,7 @@ resource "aws_codedeploy_deployment_group" "strapi" {
   load_balancer_info {
     target_group_pair_info {
       prod_traffic_route {
-        listener_arns = [var.listener_arns] # Must be a list
+        listener_arns = [var.listener_arns]
       }
 
       target_group {
@@ -34,6 +34,21 @@ resource "aws_codedeploy_deployment_group" "strapi" {
         name = var.green_tg_name
       }
     }
+  }
+
+  # ✅ This block is REQUIRED for ECS Blue/Green deployments
+  blue_green_deployment_config {
+    terminate_blue_instances_on_deployment_success {
+      action                           = "TERMINATE"
+      termination_wait_time_in_minutes = 5
+    }
+
+    deployment_ready_option {
+      action_on_timeout   = "CONTINUE_DEPLOYMENT"
+      wait_time_in_minutes = 0
+    }
+
+    # ❌ DO NOT add green_fleet_provisioning_option for ECS (only for EC2/OnPrem)
   }
 
   auto_rollback_configuration {
