@@ -78,6 +78,17 @@ module "lambda" {
 }
 
 
+module "codedeploy" {
+  source = "./CodeDeploy"
+  codedeploy_role_arn = module.iam.codedeploy_role_arn
+  cluster_name = module.ecs.cluster_name
+  service_name = module.ecs.service_name
+  listener_arns = module.alb.listener_arn
+  blue_tg_name = module.alb.blue_tg_name
+  green_tg_name = module.alb.green_tg_name
+}
+
+
 
 
 output "dns" {
