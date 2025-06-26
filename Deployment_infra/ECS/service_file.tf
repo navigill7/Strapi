@@ -8,7 +8,6 @@ resource "aws_ecs_service" "strapi-cluster-service" {
     type = "CODE_DEPLOY"
   }
 
-  
   capacity_provider_strategy {
     capacity_provider = "FARGATE_SPOT"
     weight            = 1
@@ -26,5 +25,7 @@ resource "aws_ecs_service" "strapi-cluster-service" {
     container_port   = 1337
   }
 
-  force_new_deployment = true
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
 }
