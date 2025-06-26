@@ -1,0 +1,138 @@
+name: docker-build-push-codedeploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'strapi/**'
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  IMAGE_TAG: ${{ github.sha }}
+  ECR_REPO_NAME: strapi-artifacts
+  S3_BUCKET: strapi-deployment-bucket
+  CODEDEPLOY_APP: strapi-codedeploy
+  CODEDEPLOY_GROUP: strapi-deploy-group
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image_uri: ${{ steps.build.outputs.image_uri }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image to ECR
+        id: build
+        working-directory: strapi
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          IMAGE_URI=${ECR_REGISTRY}/${ECR_REPO_NAME}:${IMAGE_TAG}
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
+          echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
+          
+      - name: Update ECS task definition with new image tag
+        run: |
+          sed -i 's|image = ".*"|image = "${{ steps.build.outputs.image_uri }}"|' Deployment_infra/ECS/task_definition.tf
+
+      - name: Set up SSH access
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Commit and push updated task definition
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git remote set-url origin git@github.com:${{ github.repository }}.git
+          git add Deployment_infra/ECS/task_definition.tf
+          git commit -m "chore: update image tag to $IMAGE_TAG"
+          git push origin main
+
+  terraform-deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    outputs:
+      task_arn: ${{ steps.output-task.outputs.task_arn }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.4
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: Deployment_infra
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        working-directory: Deployment_infra
+
+      - name: Output new Task Definition ARN
+        id: output-task
+        working-directory: Deployment_infra
+        run: |
+          echo "task_arn=$(terraform output -raw latest_task_definition_arn)" >> $GITHUB_OUTPUT
+
+  codedeploy-deploy:
+    runs-on: ubuntu-latest
+    needs: terraform-deploy
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Generate AppSpec and Upload to S3
+        run: |
+          mkdir -p appspec
+          cat <<EOF > appspec/appspec.yaml
+          version: 1
+          Resources:
+            - TargetService:
+                Type: AWS::ECS::Service
+                Properties:
+                  TaskDefinition: ${TASK_ARN}
+                  LoadBalancerInfo:
+                    ContainerName: "strapi"
+                    ContainerPort: 1337
+          EOF
+          aws s3 cp appspec/appspec.yaml s3://${S3_BUCKET}/appspec-${{ github.sha }}.yaml
+        env:
+          TASK_ARN: ${{ needs.terraform-deploy.outputs.task_arn }}
+
+      - name: Trigger CodeDeploy Deployment
+        run: |
+          aws deploy create-deployment \
+            --application-name $CODEDEPLOY_APP \
+            --deployment-group-name $CODEDEPLOY_GROUP \
+            --s3-location bucket=$S3_BUCKET,bundleType=YAML,key=appspec-${{ github.sha }}.yaml \
+            --file-exists-behavior OVERWRITE \
+            --description "Deploying $IMAGE_TAG"

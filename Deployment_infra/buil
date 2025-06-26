@@ -1,0 +1,92 @@
+name: docker build and push 
+on:
+  push:
+    branches:
+      - main
+    paths:
+        - 'strapi/**'
+env:
+    DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+    DOCKERHUB_REPOSITORY: ${{ secrets.DOCKERHUB_REPOSITORY }}
+    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    AWS_REGION: ${{ secrets.AWS_REGION }}
+    IMAGE_NAME: gillnavi/strapi
+    IMAGE_TAG: ${{github.sha}}
+    
+
+jobs:
+    build-and-push:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Log in to Docker Hub
+              uses: docker/login-action@v3
+              with:
+                username: ${{ env.DOCKERHUB_USERNAME }}
+                password: ${{ env.DOCKERHUB_PASSWORD }}
+            
+            - name: Build and push Docker image
+              working-directory: strapi
+              run: |
+                  docker build -t $IMAGE_NAME:$IMAGE_TAG .
+                  docker push $IMAGE_NAME:$IMAGE_TAG
+
+            - name: update ecs task definition with new image tag 
+              run: |
+                sed -i 's|image = ".*"|image = "'$IMAGE_NAME':'$IMAGE_TAG'"|' Deployment_infra/ECS/task_definition.tf
+
+            - name: setup the ssh access
+              run: |
+                   mkdir -p ~/.ssh
+                   echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+                   chmod 600 ~/.ssh/id_ed25519
+                   ssh-keyscan github.com >> ~/.ssh/known_hosts
+            - name: Commit and push changes via SSH
+              run: |
+                    git config --global user.name "github-actions"
+                    git config --global user.email "github-actions@github.com"
+                    git remote set-url origin git@github.com:${{ github.repository }}.git
+                    git add Deployment_infra/ECS/task_definition.tf
+                    git commit -m "chore: update image tag to $IMAGE_TAG"
+                    git push origin main
+    
+    terraform-deploy:
+        runs-on: ubuntu-latest
+        needs: build-and-push
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                terraform_version: 1.8.4
+                cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+            
+            - name: Terraform Initialize
+              working-directory: Deployment_infra
+              run: terraform init
+
+            - name: Terraform Format Check
+              working-directory: Deployment_infra
+              run: terraform fmt -check
+              continue-on-error: true
+
+            - name: Terraform Validate
+              working-directory: Deployment_infra
+              run: terraform validate
+
+            - name: Plan Terraform changes
+              working-directory: Deployment_infra
+              run: terraform plan
+
+            - name: Apply Terraform changes
+              working-directory: Deployment_infra
+              run: terraform apply -auto-approve
