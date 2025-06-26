@@ -16,8 +16,6 @@ RUN npm run build
 # Expose port
 EXPOSE 1337
 
-
-
 # ✅ Use production start script
 CMD ["npm", "run", "start"]
 
