@@ -1,5 +1,5 @@
 output "target_group_arn" {
-  value       = aws_lb_target_group.strapi_target_group.arn
+  value       = aws_lb_target_group.strapi_blue_tg.arn
   description = "ARN of the target group for the Strapi instances"
   
 }
