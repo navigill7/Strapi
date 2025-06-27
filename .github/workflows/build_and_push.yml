@@ -87,7 +87,8 @@ jobs:
 
       - name: Terraform Apply
         working-directory: Deployment_infra
-        run: terraform apply -auto-approve
+        run: |
+          terraform apply -auto-approve || { echo "Terraform apply failed"; exit 1; }
 
       - name: Debug Terraform Outputs
         working-directory: Deployment_infra
@@ -103,6 +104,10 @@ jobs:
         run: |
           TASK_ARN=$(terraform output -raw latest_task_definition_arn)
           echo "Debug - Task ARN from terraform: $TASK_ARN"
+          if [ -z "$TASK_ARN" ]; then
+            echo "Error: Failed to retrieve TASK_ARN from Terraform output"
+            exit 1
+          fi
           echo "task_arn=$TASK_ARN" >> $GITHUB_OUTPUT
 
   codedeploy-deploy:
@@ -117,6 +122,14 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Debug Task ARN
+        run: |
+          echo "Task ARN from previous job: ${{ needs.terraform-deploy.outputs.task_arn }}"
+          if [ -z "${{ needs.terraform-deploy.outputs.task_arn }}" ]; then
+            echo "Error: Task ARN is empty!"
+            exit 1
+          fi
 
       - name: Generate AppSpec and Upload to S3
         run: |
