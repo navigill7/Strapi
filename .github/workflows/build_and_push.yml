@@ -89,11 +89,21 @@ jobs:
         working-directory: Deployment_infra
         run: terraform apply -auto-approve
 
+      - name: Debug Terraform Outputs
+        working-directory: Deployment_infra
+        run: |
+          echo "All terraform outputs:"
+          terraform output
+          echo "Checking if latest_task_definition_arn output exists:"
+          terraform output latest_task_definition_arn || echo "Output 'latest_task_definition_arn' not found"
+
       - name: Output new Task Definition ARN
         id: output-task
         working-directory: Deployment_infra
         run: |
-          echo "task_arn=$(terraform output -raw latest_task_definition_arn)" >> $GITHUB_OUTPUT
+          TASK_ARN=$(terraform output -raw latest_task_definition_arn)
+          echo "Debug - Task ARN from terraform: $TASK_ARN"
+          echo "task_arn=$TASK_ARN" >> $GITHUB_OUTPUT
 
   codedeploy-deploy:
     runs-on: ubuntu-latest
