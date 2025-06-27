@@ -49,7 +49,7 @@ jobs:
 
       - name: Update ECS task definition with new image tag
         run: |
-          sed -i 's|image = ".*"|image = "${{ steps.build.outputs.image_uri }}"|' Deployment_infra/ECS/task_definition.tf
+          sed -i "s|image = \".*\"|image = \"${{ steps.build.outputs.image_uri }}\"|" Deployment_infra/ECS/task_definition.tf
 
       - name: Set up SSH access
         run: |
@@ -64,17 +64,26 @@ jobs:
           git config --global user.email "github-actions@github.com"
           git remote set-url origin git@github.com:${{ github.repository }}.git
           git add Deployment_infra/ECS/task_definition.tf
-          git commit -m "chore: update image tag to $IMAGE_TAG"
-          git push origin main
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update image tag to $IMAGE_TAG"
+            git push origin main
+          fi
 
-  terraform-deploy:
+  deploy:
     runs-on: ubuntu-latest
     needs: build-and-push
-    outputs:
-      task_arn: ${{ steps.output-task.outputs.task_arn }}
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - uses: hashicorp/setup-terraform@v3
         with:
@@ -90,66 +99,33 @@ jobs:
         run: |
           terraform apply -auto-approve || { echo "Terraform apply failed"; exit 1; }
 
-      - name: Debug Terraform Outputs
-        working-directory: Deployment_infra
-        run: |
-          echo "All terraform outputs:"
-          terraform output
-          echo "Checking if latest_task_definition_arn output exists:"
-          terraform output latest_task_definition_arn || echo "Output 'latest_task_definition_arn' not found"
-
-      - name: Output new Task Definition ARN
-        id: output-task
+      - name: Generate AppSpec and Upload to S3
         working-directory: Deployment_infra
         run: |
           TASK_ARN=$(terraform output -raw latest_task_definition_arn)
-          echo "Debug - Task ARN from terraform: $TASK_ARN"
+          echo "Task ARN from terraform: $TASK_ARN"
           if [ -z "$TASK_ARN" ]; then
-            echo "Error: Failed to retrieve TASK_ARN from Terraform output"
-            exit 1
-          fi
-          echo "task_arn=$TASK_ARN" >> $GITHUB_OUTPUT
-
-  codedeploy-deploy:
-    runs-on: ubuntu-latest
-    needs: terraform-deploy
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Debug Task ARN
-        run: |
-          echo "Task ARN from previous job: ${{ needs.terraform-deploy.outputs.task_arn }}"
-          if [ -z "${{ needs.terraform-deploy.outputs.task_arn }}" ]; then
-            echo "Error: Task ARN is empty!"
+            echo "Error: TASK_ARN is empty!"
             exit 1
           fi
 
-      - name: Generate AppSpec and Upload to S3
-        run: |
-          TASK_ARN="${{ needs.terraform-deploy.outputs.task_arn }}"
-          echo "Task ARN from terraform: $TASK_ARN"  # debug print
           mkdir -p appspec
           cat <<EOF > appspec/appspec.yaml
-          version: 1
-          Resources:
-            - TargetService:
-                Type: AWS::ECS::Service
-                Properties:
-                  TaskDefinition: $TASK_ARN
-                  LoadBalancerInfo:
-                    ContainerName: "strapi"
-                    ContainerPort: 1337
-          EOF
+version: 1
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: $TASK_ARN
+        LoadBalancerInfo:
+          ContainerName: "strapi"
+          ContainerPort: 1337
+EOF
+
           echo "Generated AppSpec content:"
-          cat appspec/appspec.yaml  # debug print
-          aws s3 cp appspec/appspec.yaml s3://${S3_BUCKET}/appspec-${{ github.sha }}.yaml
+          cat appspec/appspec.yaml
+
+          aws s3 cp appspec/appspec.yaml s3://${S3_BUCKET}/appspec-${{ github.sha }}.yaml || { echo "Failed to upload AppSpec to S3"; exit 1; }
 
       - name: Trigger CodeDeploy Deployment
         run: |
@@ -157,4 +133,4 @@ jobs:
             --application-name $CODEDEPLOY_APP \
             --deployment-group-name $CODEDEPLOY_GROUP \
             --s3-location bucket=$S3_BUCKET,bundleType=YAML,key=appspec-${{ github.sha }}.yaml \
-            --description "Deploying $IMAGE_TAG"
+            --description "Deploying $IMAGE_TAG" || { echo "CodeDeploy deployment failed"; exit 1; }
