@@ -89,8 +89,6 @@ module "codedeploy" {
 }
 
 
-
-
 output "dns" {
   value = module.alb.alb_dns_name
   description = "The DNS name of the ALB for Strapi."
