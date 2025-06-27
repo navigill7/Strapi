@@ -111,16 +111,16 @@ jobs:
 
           mkdir -p appspec
           cat <<EOF > appspec/appspec.yaml
-version: 1
-Resources:
-  - TargetService:
-      Type: AWS::ECS::Service
-      Properties:
-        TaskDefinition: $TASK_ARN
-        LoadBalancerInfo:
-          ContainerName: "strapi"
-          ContainerPort: 1337
-EOF
+          version: 1
+          Resources:
+            - TargetService:
+                Type: AWS::ECS::Service
+                Properties:
+                  TaskDefinition: $TASK_ARN
+                  LoadBalancerInfo:
+                    ContainerName: "strapi"
+                    ContainerPort: 1337
+          EOF
 
           echo "Generated AppSpec content:"
           cat appspec/appspec.yaml
