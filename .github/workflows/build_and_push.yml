@@ -8,12 +8,10 @@ on:
       - 'strapi/**'
 
 env:
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: ${{ secrets.AWS_REGION }}
   IMAGE_TAG: ${{ github.sha }}
   ECR_REPO_NAME: strapi-artifacts
-  S3_BUCKET: strapi-codedeploy-bucket752 
+  S3_BUCKET: strapi-codedeploy-bucket752
   CODEDEPLOY_APP: strapi-codedeploy
   CODEDEPLOY_GROUP: strapi-deploy-group
 
@@ -30,8 +28,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -84,12 +82,12 @@ jobs:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Terraform Init
-        run: terraform init
         working-directory: Deployment_infra
+        run: terraform init
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
         working-directory: Deployment_infra
+        run: terraform apply -auto-approve
 
       - name: Output new Task Definition ARN
         id: output-task
@@ -106,9 +104,12 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set task ARN as env var
+        run: echo "TASK_ARN=${{ needs.terraform-deploy.outputs.task_arn }}" >> $GITHUB_ENV
 
       - name: Generate AppSpec and Upload to S3
         run: |
@@ -119,11 +120,12 @@ jobs:
             - TargetService:
                 Type: AWS::ECS::Service
                 Properties:
-                  TaskDefinition: ${{ needs.terraform-deploy.outputs.task_arn }}
+                  TaskDefinition: ${TASK_ARN}
                   LoadBalancerInfo:
                     ContainerName: "strapi"
                     ContainerPort: 1337
           EOF
+          cat appspec/appspec.yaml  # debug print
           aws s3 cp appspec/appspec.yaml s3://${S3_BUCKET}/appspec-${{ github.sha }}.yaml
 
       - name: Trigger CodeDeploy Deployment
