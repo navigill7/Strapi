@@ -108,11 +108,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Set task ARN as env var
-        run: echo "TASK_ARN=${{ needs.terraform-deploy.outputs.task_arn }}" >> $GITHUB_ENV
-
       - name: Generate AppSpec and Upload to S3
+        env:
+          TASK_ARN: ${{ needs.terraform-deploy.outputs.task_arn }}
         run: |
+          echo "Task ARN from terraform: $TASK_ARN"  # debug print
           mkdir -p appspec
           cat <<EOF > appspec/appspec.yaml
           version: 1
@@ -120,11 +120,12 @@ jobs:
             - TargetService:
                 Type: AWS::ECS::Service
                 Properties:
-                  TaskDefinition: ${TASK_ARN}
+                  TaskDefinition: $TASK_ARN
                   LoadBalancerInfo:
                     ContainerName: "strapi"
                     ContainerPort: 1337
           EOF
+          echo "Generated AppSpec content:"
           cat appspec/appspec.yaml  # debug print
           aws s3 cp appspec/appspec.yaml s3://${S3_BUCKET}/appspec-${{ github.sha }}.yaml
 
