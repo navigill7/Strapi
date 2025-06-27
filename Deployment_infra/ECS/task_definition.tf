@@ -8,7 +8,7 @@ resource "aws_ecs_task_definition" "TD" {
   container_definitions = jsonencode([
     {
       name  = "strapi"
-      image = "647198474080.dkr.ecr.us-east-1.amazonaws.com/strapi-artifacts:1813af04798292aa5e36cffd2d98547a813afe97"
+      image = "647198474080.dkr.ecr.us-east-1.amazonaws.com/strapi-artifacts:397194633e63a930fb6663e29dccc2582599c1a6"
       essential = true
       portMappings = [
         {
