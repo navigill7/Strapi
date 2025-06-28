@@ -15,5 +15,6 @@ Ready for CI/CD integration
 
 # INFRASTRUCTURE DIAGRAM 
 
-![image](https://github.com/user-attachments/assets/d747e435-da53-42ba-9b1b-0fe633b1c50c)
+![image](https://github.com/user-attachments/assets/d0b5178d-cc91-4773-bd64-7fd58622982c)
+
 
