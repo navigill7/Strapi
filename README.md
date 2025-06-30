@@ -91,6 +91,28 @@ Deployment_infra/
     └── build_and_push.yml (Update S3_BUCKET and ECR repo)
 
 
+```
+
+# TO DEPLOY
+
+
+# 1. Clone this repository
+git clone https://github.com/navigill7/Strapi.git
+cd Strapi
+
+# 2. Create the S3 bucket manually via AWS Console or CLI
+aws s3 mb s3://strapi-codedeploy-bucket752
+
+# 3. Set the S3 bucket name inside:
+# - Deployment_infra/Lambda/main.py
+# - .github/workflows/build_and_push.yml
+
+# 4. Push your changes to the `main` branch
+git add .
+git commit -m "Initial commit"
+git push origin main
+
+
 
 
 
