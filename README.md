@@ -1,20 +1,96 @@
-This repository contains infrastructure code and automation scripts for deploying a Strapi application using Docker and Terraform. It sets up a production-ready environment on AWS, including EC2 instances, VPC networking, and optionally a bastion host. The deployment pipeline installs Docker, pulls the Strapi Docker image, and runs it with proper configuration.
+# 🚀 Strapi CMS Blue/Green Deployment on AWS (Terraform + GitHub Actions)
 
-Key Features:
+This project automates the **CI/CD pipeline for Strapi CMS** with a **Blue/Green deployment strategy** using:
 
-Infrastructure as Code (Terraform)
+- **Terraform** for provisioning infrastructure
+- **GitHub Actions** for automation and deployment
+- **Amazon ECS (Fargate)** for running Strapi containers
+- **CodeDeploy** for traffic shifting between environments
 
-Automated Docker setup via EC2 user-data
+---
 
-Supports Strapi running on SQLite or PostgreSQL
-
-Bastion host support for accessing private instances
-
-Ready for CI/CD integration
-
-
-# INFRASTRUCTURE DIAGRAM 
+## 🧩 Architecture Overview
 
 ![image](https://github.com/user-attachments/assets/d0b5178d-cc91-4773-bd64-7fd58622982c)
+
+---
+
+## 🛠️ Prerequisites
+
+### ✅ AWS Resources You Must Set Up:
+
+- **S3 Bucket**: Used by CodeDeploy to store the AppSpec file.
+  - Name your bucket (e.g., `strapi-codedeploy-bucket752`)
+  - Make sure it's in the same region as your deployment.
+  - Update the S3 bucket name:
+    - In the Lambda file: `Deployment_infra/Lambda/main.py`
+    - In `.github/workflows/build_and_push.yml` → `S3_BUCKET` env
+
+- **Terraform Cloud Account**:
+  - Create a workspace
+  - Add your Terraform Cloud API token to GitHub secrets
+
+---
+
+## 🔐 Required GitHub Repository Secrets
+
+| Secret Name                     | Purpose                                  |
+|-------------------------------|------------------------------------------|
+| `AWS_ACCESS_KEY_ID`           | IAM access key with ECS, S3, CodeDeploy  |
+| `AWS_SECRET_ACCESS_KEY`       | IAM secret key                           |
+| `AWS_REGION`                  | AWS region (e.g., `ap-south-1`)          |
+| `DOCKERHUB_USERNAME`          | Optional – for DockerHub login           |
+| `DOCKERHUB_PASSWORD`          | Optional – for DockerHub login           |
+| `DOCKERHUB_REPOSITORY`        | Optional – for DockerHub repo            |
+| `SSH_PRIVATE_KEY`             | GitHub Actions SSH push support          |
+| `TF_API_TOKEN`                | Terraform Cloud API token                |
+| `TF_CLOUD_TOKEN_APP_TERRAFORM_IO` | Terraform CLI auth to cloud backend  |
+
+---
+
+## 🔄 Deployment Flow
+
+1. **Developer pushes code** to `main` branch.
+2. **GitHub Actions**:
+   - Builds Docker image and pushes it to **Amazon ECR** with `sha` tag
+   - Updates ECS Task Definition with the new image
+   - Commits and pushes the updated `.tf` file
+3. **Terraform Apply**:
+   - Registers a **new Task Definition revision**
+   - Outputs the **latest ARN**
+4. **GitHub Actions**:
+   - Generates a new **AppSpec** file with that ARN
+   - Uploads AppSpec to **S3**
+   - Triggers a **CodeDeploy** deployment
+
+---
+
+## 🧪 Cost Optimization
+
+A **Lambda function** is deployed in a private subnet to:
+- Remove stale ECS tasks
+- Clean orphan ENIs and services
+
+---
+
+## 📁 Project Structure
+
+```bash
+Deployment_infra/
+├── ECS/
+│   ├── service_file.tf
+│   └── task_definition.tf
+├── CodeDeploy/
+│   └── main.tf
+├── Lambda/
+│   └── main.py (Update bucket name here)
+├── variables.tf
+└── main.tf
+.github/
+└── workflows/
+    └── build_and_push.yml (Update S3_BUCKET and ECR repo)
+
+
+
 
 
