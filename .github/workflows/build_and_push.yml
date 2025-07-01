@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       image_uri: ${{ steps.build.outputs.image_uri }}
+      
 
     steps:
       - name: Checkout code
